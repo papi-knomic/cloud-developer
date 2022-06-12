@@ -1,6 +1,7 @@
 import express from 'express';
 import bodyParser from 'body-parser';
 import {filterImageFromURL, deleteLocalFiles} from './util/util';
+const axios = require('axios');
 
 (async () => {
 
@@ -34,8 +35,28 @@ import {filterImageFromURL, deleteLocalFiles} from './util/util';
   // Root Endpoint
   // Displays a simple message to the user
   app.get( "/", async ( req, res ) => {
-    res.send("try GET /filteredimage?image_url={{}}")
+    res.sendFile(__dirname + '/screens/index.html');
   } );
+
+  app.get( "/filteredimage", async ( req, res ) => {
+    const image_url  = req.query.image_url;
+    if (!image_url) {
+      res.status(400).send("image_url is required");
+      return;
+    }
+
+     //GET IMAGE PATH FROM FILTERED IMAGE AND THEN DELETE IT
+    filterImageFromURL(image_url).then(async (filteredpath) => {
+      res.sendFile(filteredpath, {}, ()=>{
+        deleteLocalFiles([filteredpath]);
+      });
+    }).catch(err => {
+      res.status(422).send("Error filtering image");
+    }
+    );
+    
+  }
+  );
   
 
   // Start the Server
